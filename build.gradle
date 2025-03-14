@@ -67,8 +67,17 @@ jar {
 	inputs.property "archivesName", project.base.archivesName
 
 	from("LICENSE") {
-		rename { "${it}_${inputs.properties.archivesName}"}
+		rename { "${it}_${inputs.properties.archivesName}" }
 	}
+}
+
+tasks.named('remapJar') {
+	def minecraftVersion = project.minecraft_version
+	def modVersion = project.mod_version
+	def namespace = project.archives_base_name
+
+	archiveBaseName.set("${namespace}-${minecraftVersion}-v${modVersion}")
+	archiveVersion.set("")
 }
 
 // configure the maven publication
