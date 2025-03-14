@@ -1,0 +1,7 @@
+{
+    "key.variantswap.swap": "Swap Key",
+    "category.variantswap": "Variant Swap",
+    "variantswap.command.insufficient_permission": "Insufficient permission level",
+    "variantswap.command.cooldown_reset": "Cooldown reset to %sms",
+    "variantswap.command.cooldown_set": "Cooldown set to %sms"
+}
