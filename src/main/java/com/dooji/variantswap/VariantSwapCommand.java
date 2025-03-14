@@ -24,7 +24,7 @@ public class VariantSwapCommand {
     }
 
     private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, RegistrationEnvironment environment) {
-        dispatcher.register(CommandManager.literal("variantswap")
+        dispatcher.register(CommandManager.literal("variant-swap")
             .then(CommandManager.literal("cooldown")
                 .then(CommandManager.literal("reset")
                     .executes(context -> {
