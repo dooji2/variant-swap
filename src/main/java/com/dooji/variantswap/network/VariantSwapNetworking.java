@@ -52,7 +52,6 @@ public class VariantSwapNetworking {
 
             return;
         }
-    
 
         int bestSlot = -1;
         int bestCount = 0;
@@ -79,7 +78,7 @@ public class VariantSwapNetworking {
 
             player.getInventory().setStack(bestSlot, heldStack);
             player.getInventory().setStack(slot, targetStack);
-            
+
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(-2, 0, slot, player.getInventory().getStack(slot)));
             player.networkHandler.sendPacket(new ScreenHandlerSlotUpdateS2CPacket(-2, 0, bestSlot, player.getInventory().getStack(bestSlot)));
         }
