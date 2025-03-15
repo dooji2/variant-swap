@@ -16,7 +16,6 @@ import net.minecraft.util.Identifier;
 import org.lwjgl.glfw.GLFW;
 
 import java.util.List;
-import java.util.Map;
 
 public class VariantSwapClient implements ClientModInitializer {
     private static KeyBinding variantSwapKey;
@@ -54,17 +53,77 @@ public class VariantSwapClient implements ClientModInitializer {
                     if (Math.abs(delta) >= 1.0) {
                         boolean forward = delta > 0;
                         int slot = client.player.getInventory().selectedSlot;
-
-                        Identifier currentId = Registries.ITEM.getId(client.player.getInventory().getStack(slot).getItem());
-                        Identifier targetId = getNextVariant(currentId, forward);
-                        if (targetId != null) {
-                            VariantSwapHud.onScroll(slot, forward);
-                            String targetIdString = targetId.toString();
-                            
-                            VariantSwapRequestPayload payload = new VariantSwapRequestPayload(slot, targetIdString);
-                            ClientPlayNetworking.send(payload);                            
+                        
+                        if (client.player.getInventory().getStack(slot).isEmpty()) {
+                            return;
                         }
 
+                        Identifier currentId = Registries.ITEM.getId(client.player.getInventory().getStack(slot).getItem());
+                        List<Identifier> group = variantMapping.getMapping().get(currentId);
+
+                        if (group == null) {
+                            for (List<Identifier> maybeGroup : variantMapping.getMapping().values()) {
+                                if (maybeGroup.contains(currentId)) {
+                                    group = maybeGroup;
+                                    break;
+                                }
+                            }
+                        }
+
+                        if (group == null || group.size() < 2) {
+                            return;
+                        }
+                        
+                        int currentIndex = group.indexOf(currentId);
+                        if (currentIndex == -1) return;
+
+                        int originalIndex = currentIndex;
+                        Identifier targetCandidate = null;
+                        for (int i = 1; i < group.size(); i++) {
+                            currentIndex = (currentIndex + (forward ? 1 : -1) + group.size()) % group.size();
+
+                            Identifier candidateId = group.get(currentIndex);
+                            if (client.player.isCreative()) {
+                                targetCandidate = candidateId;
+                                break;
+                            } else {
+                                int bestSlot = -1;
+                                int bestCount = 0;
+                                for (int invSlot = 0; invSlot < client.player.getInventory().size(); invSlot++) {
+                                    if (invSlot == slot) continue;
+
+                                    if (!client.player.getInventory().getStack(invSlot).isEmpty()) {
+                                        Identifier stackId = Registries.ITEM.getId(client.player.getInventory().getStack(invSlot).getItem());
+
+                                        if (stackId.equals(candidateId)) {
+                                            int count = client.player.getInventory().getStack(invSlot).getCount();
+
+                                            if (count > bestCount) {
+                                                bestCount = count;
+                                                bestSlot = invSlot;
+                                            }
+                                        }
+                                    }
+                                }
+
+                                if (bestSlot != -1) {
+                                    targetCandidate = candidateId;
+                                    break;
+                                }
+                            }
+
+                            if (currentIndex == originalIndex) {
+                                break;
+                            }
+                        }
+                        
+                        if (targetCandidate != null) {
+                            VariantSwapHud.onScroll(slot, forward);
+                            
+                            VariantSwapRequestPayload payload = new VariantSwapRequestPayload(slot, targetCandidate.toString());
+                            ClientPlayNetworking.send(payload);
+                        }
+                        
                         lastSwapTime = currentTime;
                         VariantSwapInputHandler.decrementScrollDelta(2.0);
                     }
@@ -75,33 +134,5 @@ public class VariantSwapClient implements ClientModInitializer {
         });
 
         VariantSwapClientNetworking.init();
-    }
-
-    public static Identifier getNextVariant(Identifier current, boolean forward) {
-        List<Identifier> variants = variantMapping.getMapping().get(current);
-
-        if (variants == null) {
-            for (List<Identifier> group : variantMapping.getMapping().values()) {
-                if (group.contains(current)) {
-                    variants = group;
-                    break;
-                }
-            }
-        }
-
-        if (variants != null) {
-            int index = variants.indexOf(current);
-
-            if (index != -1) {
-                int nextIndex = forward ? (index + 1) % variants.size() : (index - 1 + variants.size()) % variants.size();
-                return variants.get(nextIndex);
-            }
-        }
-
-        return null;
-    }
-
-    public static void updateMapping(Map<String, List<String>> newMapping) {
-        variantMapping.updateMappingFromString(newMapping);
     }
 }
