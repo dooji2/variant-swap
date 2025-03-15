@@ -10,6 +10,7 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 import org.lwjgl.glfw.GLFW;
@@ -54,10 +55,15 @@ public class VariantSwapClient implements ClientModInitializer {
                         boolean forward = delta > 0;
                         int slot = client.player.getInventory().selectedSlot;
 
-                        VariantSwapHud.onScroll(slot, forward);
-                        VariantSwapRequestPayload payload = new VariantSwapRequestPayload(slot, forward);
-
-                        ClientPlayNetworking.send(payload);
+                        Identifier currentId = Registries.ITEM.getId(client.player.getInventory().getStack(slot).getItem());
+                        Identifier targetId = getNextVariant(currentId, forward);
+                        if (targetId != null) {
+                            VariantSwapHud.onScroll(slot, forward);
+                            String targetIdString = targetId.toString();
+                            
+                            VariantSwapRequestPayload payload = new VariantSwapRequestPayload(slot, targetIdString);
+                            ClientPlayNetworking.send(payload);                            
+                        }
 
                         lastSwapTime = currentTime;
                         VariantSwapInputHandler.decrementScrollDelta(2.0);
