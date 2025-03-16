@@ -29,7 +29,7 @@ public class VariantSwapClient implements ClientModInitializer {
         variantSwapKey = KeyBindingHelper.registerKeyBinding(new KeyBinding(
                 "key.variantswap.swap",
                 InputUtil.Type.KEYSYM,
-                GLFW.GLFW_KEY_LEFT_SHIFT,
+                GLFW.GLFW_KEY_Z,
                 "category.variantswap"
         ));
 
