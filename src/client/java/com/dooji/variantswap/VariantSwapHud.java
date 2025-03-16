@@ -3,7 +3,7 @@ package com.dooji.variantswap;
 import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
-
+import net.fabricmc.loader.api.FabricLoader;
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -27,6 +27,9 @@ public class VariantSwapHud implements HudRenderCallback {
     private static final int BASE_ICON_SIZE = 16;
     private static final int SELECTED_ICON_SIZE = 24;
     private static final int SPACING = 8;
+
+    private static float currentY = -(SELECTED_ICON_SIZE + 4);
+    private static float finalY = 20f;
 
     public static void onScroll(int slot, boolean forward) {
         MinecraftClient client = MinecraftClient.getInstance();
@@ -79,16 +82,29 @@ public class VariantSwapHud implements HudRenderCallback {
         }
 
         displayEndTime = System.currentTimeMillis() + DISPLAY_DURATION_MS;
+
+        if (currentGroup != null && currentY < -(SELECTED_ICON_SIZE + 4) + 1) {
+            currentY = -(SELECTED_ICON_SIZE + 4);
+        }
     }
 
     @Override
     public void onHudRender(DrawContext context, RenderTickCounter tickDelta) {
         long currentTime = System.currentTimeMillis();
 
-        if (currentGroup == null || currentTime > displayEndTime) return;
+        if (currentGroup == null) return;
 
         MinecraftClient client = MinecraftClient.getInstance();
         int screenWidth = client.getWindow().getScaledWidth();
+
+        if (currentTime <= displayEndTime) {
+            finalY = isWthitPresent() ? 40f : 20f;
+        } else {
+            finalY = -(SELECTED_ICON_SIZE + 4);
+        }
+        
+        currentY += (finalY - currentY) * 0.1f;
+        int y = Math.round(currentY);
 
         // int totalGradientHeight = 64;
         // int midY = totalGradientHeight / 2;
@@ -115,7 +131,6 @@ public class VariantSwapHud implements HudRenderCallback {
         }
 
         int centerX = screenWidth / 2;
-        int y = 20;
         int centerIndex = VISIBLE_COUNT / 2;
 
         for (int i = 0; i < VISIBLE_COUNT; i++) {
@@ -159,6 +174,14 @@ public class VariantSwapHud implements HudRenderCallback {
 
             context.getMatrices().pop();
         }
+
+        if (currentTime > displayEndTime && currentY <= -(SELECTED_ICON_SIZE + 4) + 1) {
+            currentGroup = null;
+        }
+    }
+
+    private static boolean isWthitPresent() {
+        return FabricLoader.getInstance().isModLoaded("wthit");
     }
 
     public static void register() {
