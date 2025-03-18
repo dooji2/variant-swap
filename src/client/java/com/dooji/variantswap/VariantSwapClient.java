@@ -14,10 +14,15 @@ import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 import org.lwjgl.glfw.GLFW;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.util.List;
 
 public class VariantSwapClient implements ClientModInitializer {
+    public static final String MOD_ID = "variant-swap";
+    public static final Logger LOGGER = LoggerFactory.getLogger(MOD_ID);
+
     private static KeyBinding variantSwapKey;
     public static VariantMapping variantMapping;
 

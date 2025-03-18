@@ -18,7 +18,5 @@ public class VariantSwap implements ModInitializer {
         VariantSwapNetworking.init();
 		VariantSwapConfig.loadConfig();
 		VariantSwapCommand.register();
-
-		LOGGER.info("[Variant Swap] Finished initializing.");
     }
 }
