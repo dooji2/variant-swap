@@ -64,16 +64,7 @@ public class VariantSwapClient implements ClientModInitializer {
                         }
 
                         Identifier currentId = Registries.ITEM.getId(client.player.getInventory().getStack(slot).getItem());
-                        List<Identifier> group = variantMapping.getMapping().get(currentId);
-
-                        if (group == null) {
-                            for (List<Identifier> maybeGroup : variantMapping.getMapping().values()) {
-                                if (maybeGroup.contains(currentId)) {
-                                    group = maybeGroup;
-                                    break;
-                                }
-                            }
-                        }
+                        List<Identifier> group = variantMapping.getGroup(currentId);
 
                         if (group == null || group.size() < 2) {
                             return;

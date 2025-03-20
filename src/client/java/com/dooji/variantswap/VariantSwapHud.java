@@ -39,16 +39,7 @@ public class VariantSwapHud implements HudRenderCallback {
         if (heldStack.isEmpty()) return;
 
         Identifier currentId = Registries.ITEM.getId(heldStack.getItem());
-        List<Identifier> group = VariantSwapClient.variantMapping.getMapping().get(currentId);
-
-        if (group == null) {
-            for (List<Identifier> g : VariantSwapClient.variantMapping.getMapping().values()) {
-                if (g.contains(currentId)) {
-                    group = g;
-                    break;
-                }
-            }
-        }
+        List<Identifier> group = VariantSwapClient.variantMapping.getGroup(currentId);
 
         if (group == null || group.size() < 2) return;
 
