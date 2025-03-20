@@ -23,12 +23,10 @@ public class VariantMapping {
     private static final Set<String> ignoreAdjectives = new HashSet<>(Arrays.asList("oak","spruce","birch","jungle","acacia","cherry","dark","mangrove","smooth","polished","cracked","mossy","chiseled"));
 
     public VariantMapping() {
-        if (!configFile.exists()) {
-            Map<String, List<String>> groups = generateMappings();
-            saveMapping(groups);
+        Map<String, List<String>> groups = generateMappings();
+        saveMapping(groups);
 
-            VariantSwapClient.LOGGER.info("[Variant Swap] Finished generating variant mappings. Total groups: {}", groups.size());
-        }
+        VariantSwapClient.LOGGER.info("[Variant Swap] Finished generating variant mappings. Total groups: {}", groups.size());
     }
 
     private Map<String, List<String>> generateMappings() {
