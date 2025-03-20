@@ -7,26 +7,40 @@ import net.minecraft.registry.tag.TagKey;
 import net.minecraft.util.Identifier;
 
 import java.util.*;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+import com.google.gson.Gson;
+import com.google.gson.stream.JsonReader;
 
 public class VariantMapping {
-    private final Map<Identifier, List<Identifier>> mapping = new HashMap<>();
+    private static final File configFile = new File("config/Variant Swap/mappings.json");
+    private static final Gson gson = new Gson();
+    private static final Object fileLock = new Object();
+
     private static final Set<String> ignoreAdjectives = new HashSet<>(Arrays.asList("oak","spruce","birch","jungle","acacia","cherry","dark","mangrove","smooth","polished","cracked","mossy","chiseled"));
-    
+
     public VariantMapping() {
-        generateMappings();
-        VariantSwapClient.LOGGER.info("[Variant Swap] Finished generating variant mappings. Total groups: {}", mapping.size());
+        if (!configFile.exists()) {
+            Map<String, List<String>> groups = generateMappings();
+            saveMapping(groups);
+
+            VariantSwapClient.LOGGER.info("[Variant Swap] Finished generating variant mappings. Total groups: {}", groups.size());
+        }
     }
 
-    private void generateMappings() {
+    private Map<String, List<String>> generateMappings() {
         Set<Identifier> allItems = Registries.ITEM.getIds();
-        Map<String, List<Identifier>> groups = new HashMap<>();
+        Map<String, List<String>> groups = new HashMap<>();
 
         for (Identifier id : allItems) {
             String candidate = null;
 
             Item item = Registries.ITEM.get(id);
             ItemStack stack = new ItemStack(item);
-            
+
             for (TagKey<Item> tag : stack.streamTags().toList()) {
                 Identifier tagId = tag.id();
                 if ("variant_swap".equals(tagId.getNamespace())) {
@@ -34,7 +48,7 @@ public class VariantMapping {
                     break;
                 }
             }
-            
+
             if (candidate == null) {
                 String path = id.getPath();
                 String[] tokens = path.split("_");
@@ -48,81 +62,128 @@ public class VariantMapping {
                     }
                 }
             }
-            
+
             if (candidate != null) {
-                groups.computeIfAbsent(candidate, k -> new ArrayList<>()).add(id);
+                groups.computeIfAbsent(candidate, k -> new ArrayList<>()).add(id.toString());
             }
         }
 
-        for (List<Identifier> group : groups.values()) {
-            if (group.size() >= 2) {
-                group.sort(Comparator.comparing(Identifier::toString));
+        Iterator<Map.Entry<String, List<String>>> it = groups.entrySet().iterator();
+        while (it.hasNext()) {
+            Map.Entry<String, List<String>> entry = it.next();
+            if (entry.getValue().size() < 2) {
+                it.remove();
+            } else {
+                Collections.sort(entry.getValue());
+            }
+        }
 
-                for (Identifier id : group) {
-                    if (!mapping.containsKey(id)) {
-                        mapping.put(id, new ArrayList<>(group));
-                    }
+        return groups;
+    }
+
+    private void saveMapping(Map<String, List<String>> mapping) {
+        synchronized(fileLock) {
+            try {
+                configFile.getParentFile().mkdirs();
+                try (FileWriter writer = new FileWriter(configFile)) {
+                    gson.toJson(mapping, writer);
                 }
+            } catch (IOException e) {
+                e.printStackTrace();
             }
         }
     }
 
-    public Identifier getNextVariant(Identifier current, boolean forward) {
-        List<Identifier> variants = mapping.get(current);
+    private String getCandidate(Identifier id) {
+        String candidate = null;
+        Item item = Registries.ITEM.get(id);
+        ItemStack stack = new ItemStack(item);
 
-        if (variants == null) {
-            for (List<Identifier> group : mapping.values()) {
-                if (group.contains(current)) {
-                    variants = group;
+        for (TagKey<Item> tag : stack.streamTags().toList()) {
+            Identifier tagId = tag.id();
+            if ("variant_swap".equals(tagId.getNamespace())) {
+                candidate = tagId.getPath();
+                break;
+            }
+        }
+
+        if (candidate == null) {
+            String path = id.getPath();
+            String[] tokens = path.split("_");
+
+            for (int i = tokens.length - 1; i >= 0; i--) {
+                if (!ignoreAdjectives.contains(tokens[i])) {
+                    candidate = tokens[i];
                     break;
                 }
             }
         }
 
-        if (variants != null) {
-            int index = variants.indexOf(current);
+        return candidate;
+    }
 
-            if (index != -1) {
-                int nextIndex = forward ? (index + 1) % variants.size() : (index - 1 + variants.size()) % variants.size();
-                return variants.get(nextIndex);
-            }
+    public Identifier getNextVariant(Identifier current, boolean forward) {
+        String candidate = getCandidate(current);
+
+        if (candidate == null) {
+            return null;
         }
 
-        return null;
-    }
-
-    public Map<Identifier, List<Identifier>> getMapping() {
-        return mapping;
-    }
-
-    public Map<String, List<String>> getMappingAsString() {
-        Map<String, List<String>> map = new HashMap<>();
-
-        for (Map.Entry<Identifier, List<Identifier>> entry : mapping.entrySet()) {
-            List<String> list = new ArrayList<>();
-
-            for (Identifier id : entry.getValue()) {
-                list.add(id.toString());
-            }
-
-            map.put(entry.getKey().toString(), list);
+        List<Identifier> group = loadGroup(candidate);
+        if (group == null || group.isEmpty()) {
+            return null;
         }
 
-        return map;
+        int index = group.indexOf(current);
+        if (index == -1) {
+            return null;
+        }
+
+        int nextIndex = forward ? (index + 1) % group.size() : (index - 1 + group.size()) % group.size();
+        return group.get(nextIndex);
     }
 
-    public void updateMappingFromString(Map<String, List<String>> newMapping) {
-        mapping.clear();
+    public List<Identifier> getGroup(Identifier current) {
+        String candidate = getCandidate(current);
+        if (candidate == null) {
+            return null;
+        }
 
-        for (Map.Entry<String, List<String>> entry : newMapping.entrySet()) {
-            Identifier key = Identifier.of(entry.getKey());
-            List<Identifier> list = new ArrayList<>();
+        return loadGroup(candidate);
+    }
 
-            for (String s : entry.getValue()) {
-                list.add(Identifier.of(s));
+    private List<Identifier> loadGroup(String candidate) {
+        synchronized(fileLock) {
+            if (!configFile.exists()) {
+                return null;
             }
 
-            mapping.put(key, list);
+            List<Identifier> group = new ArrayList<>();
+            try (JsonReader reader = new JsonReader(new FileReader(configFile))) {
+                reader.beginObject();
+
+                while (reader.hasNext()) {
+                    String key = reader.nextName();
+
+                    if (key.equals(candidate)) {
+                        reader.beginArray();
+
+                        while (reader.hasNext()) {
+                            group.add(Identifier.of(reader.nextString()));
+                        }
+
+                        reader.endArray();
+                    } else {
+                        reader.skipValue();
+                    }
+                }
+
+                reader.endObject();
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
+
+            return group;
         }
     }
 }
