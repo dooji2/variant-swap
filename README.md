@@ -12,3 +12,8 @@ Available settings in `config.json`:
 - Delay (50ms by default) - this is to throttle the scrolling
 
 On servers it is recommended to change the OP level as desired. The `/variant-swap` command can be used to reset the delay (cooldown) to its default value or to change it to another value (still in `ms`).
+
+### **For Developers**
+If your mod adds items or blocks and you want to organize them into specific custom categories, add a `variant_swap` tag to each item/block. This tag will determine the group in which the item is categorized.
+
+For example, imagine you have a mod that adds various furniture items, and you want to categorize them by wood type instead of grouping all chairs together. You could tag all oak items with `variant_swap:oak` (so `oak` or whatever you wanna call the category), all spruce items with `variant_swap:spruce`, and so on.
