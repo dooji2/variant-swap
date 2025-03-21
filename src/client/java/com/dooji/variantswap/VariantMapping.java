@@ -1,5 +1,6 @@
 package com.dooji.variantswap;
 
+import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.registry.Registries;
@@ -102,6 +103,16 @@ public class VariantMapping {
             if ("variant_swap".equals(tagId.getNamespace())) {
                 candidate = tagId.getPath();
                 break;
+            }
+        }
+
+        if (candidate == null && item instanceof BlockItem blockItem) {
+            for (TagKey<?> tag : blockItem.getBlock().getDefaultState().streamTags().toList()) {
+                Identifier tagId = tag.id();
+                if ("variant_swap".equals(tagId.getNamespace())) {
+                    candidate = tagId.getPath();
+                    break;
+                }
             }
         }
 
