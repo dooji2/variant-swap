@@ -25,6 +25,7 @@ public class VariantSwapClient implements ClientModInitializer {
 
     private static KeyBinding variantSwapKey;
     public static VariantMapping variantMapping;
+    private static boolean mappingsGenerated;
 
     public static long lastSwapTime = 0;
     public static int swapCooldown = 100;
@@ -45,6 +46,11 @@ public class VariantSwapClient implements ClientModInitializer {
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!VariantSwapInputHandler.isRegistered() && client.getWindow() != null) {
                 VariantSwapInputHandler.register();
+            }
+
+            if(!mappingsGenerated) {
+                variantMapping.setup();
+                mappingsGenerated = true;
             }
         });
 

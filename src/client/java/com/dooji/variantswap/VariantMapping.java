@@ -23,7 +23,9 @@ public class VariantMapping {
 
     private static final Set<String> ignoreAdjectives = new HashSet<>(Arrays.asList("oak","spruce","birch","jungle","acacia","cherry","dark","mangrove","smooth","polished","cracked","mossy","chiseled"));
 
-    public VariantMapping() {
+    public VariantMapping() {}
+
+    public void setup() {
         Map<String, List<String>> groups = generateMappings();
         saveMapping(groups);
 
