@@ -41,7 +41,7 @@ public class VariantSwapClient implements ClientModInitializer {
 
         VariantSwapInputHandler.setVariantSwapKey(variantSwapKey);
         variantMapping = new VariantMapping();
-        VariantSwapHud.register();
+        VariantSwapHud.registerHudLayer();
 
         ClientTickEvents.END_CLIENT_TICK.register(client -> {
             if (!VariantSwapInputHandler.isRegistered() && client.getWindow() != null) {
@@ -63,7 +63,7 @@ public class VariantSwapClient implements ClientModInitializer {
 
                     if (Math.abs(delta) >= 1.0) {
                         boolean forward = delta > 0;
-                        int slot = client.player.getInventory().selectedSlot;
+                        int slot = client.player.getInventory().getSelectedSlot();
                         
                         if (client.player.getInventory().getStack(slot).isEmpty()) {
                             return;

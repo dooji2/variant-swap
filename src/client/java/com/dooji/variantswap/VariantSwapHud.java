@@ -1,9 +1,13 @@
 package com.dooji.variantswap;
 
+import com.mojang.blaze3d.opengl.GlStateManager;
 import com.mojang.blaze3d.systems.RenderSystem;
 
-import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.HudLayerRegistrationCallback;
+import net.fabricmc.fabric.api.client.rendering.v1.IdentifiedLayer;
+import net.fabricmc.fabric.api.client.rendering.v1.LayeredDrawerWrapper;
 import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.client.MinecraftClient;
 import net.minecraft.client.gui.DrawContext;
 import net.minecraft.client.render.RenderTickCounter;
@@ -15,7 +19,7 @@ import net.minecraft.util.Identifier;
 import java.util.ArrayList;
 import java.util.List;
 
-public class VariantSwapHud implements HudRenderCallback {
+public class VariantSwapHud implements HudLayerRegistrationCallback {
     private static List<Identifier> currentGroup = null;
 
     private static int selectedIndex = 0;
@@ -80,7 +84,11 @@ public class VariantSwapHud implements HudRenderCallback {
     }
 
     @Override
-    public void onHudRender(DrawContext context, RenderTickCounter tickDelta) {
+    public void register(LayeredDrawerWrapper layeredDrawer) {
+        layeredDrawer.attachLayerAfter(IdentifiedLayer.MISC_OVERLAYS, Identifier.of("variant-swap", "hud_layer"), (context, tickCounter) -> renderHud(context, tickCounter));
+    }
+
+    public void renderHud(DrawContext context, RenderTickCounter tickDelta) {
         long currentTime = System.currentTimeMillis();
 
         if (currentGroup == null) return;
@@ -158,7 +166,7 @@ public class VariantSwapHud implements HudRenderCallback {
             context.getMatrices().translate(x, adjustedY, 0);
             context.getMatrices().scale(scale, scale, scale);
 
-            RenderSystem.enableBlend();
+            GlStateManager._enableBlend();
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, itemAlpha);
             context.drawItem(stack, 0, 0, 0);
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
@@ -175,7 +183,7 @@ public class VariantSwapHud implements HudRenderCallback {
         return FabricLoader.getInstance().isModLoaded("wthit");
     }
 
-    public static void register() {
-        HudRenderCallback.EVENT.register(new VariantSwapHud());
+    public static void registerHudLayer() {
+        HudLayerRegistrationCallback.EVENT.register(new VariantSwapHud());
     }
 }
