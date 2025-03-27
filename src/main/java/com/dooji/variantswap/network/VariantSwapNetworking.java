@@ -4,10 +4,11 @@ import com.dooji.variantswap.VariantSwapConfig;
 import com.dooji.variantswap.network.payloads.VariantSwapRequestPayload;
 import com.dooji.variantswap.network.payloads.VariantDelayPayload;
 
-import net.fabricmc.fabric.api.networking.v1.PayloadTypeRegistry;
+import io.netty.buffer.Unpooled;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayConnectionEvents;
 
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.network.ServerPlayerEntity;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
@@ -17,18 +18,19 @@ import net.minecraft.registry.Registries;
 
 public class VariantSwapNetworking {
     public static void init() {
-        PayloadTypeRegistry.playS2C().register(VariantDelayPayload.ID, VariantDelayPayload.CODEC);
-        PayloadTypeRegistry.playC2S().register(VariantSwapRequestPayload.ID, VariantSwapRequestPayload.CODEC);
-
-        ServerPlayNetworking.registerGlobalReceiver(VariantSwapRequestPayload.ID, (payload, context) -> {
-            context.player().getServer().execute(() -> {
-                processSwapRequest(context.player(), payload);
+        ServerPlayNetworking.registerGlobalReceiver(VariantSwapRequestPayload.ID, (server, player, handler, buf, responseSender) -> {
+            VariantSwapRequestPayload payload = VariantSwapRequestPayload.decode(buf);
+            server.execute(() -> {
+                processSwapRequest(player, payload);
             });
         });
 
         ServerPlayConnectionEvents.JOIN.register((handler, sender, server) -> {
             VariantDelayPayload delayPayload = new VariantDelayPayload(VariantSwapConfig.getDelay());
-            ServerPlayNetworking.send(handler.getPlayer(), delayPayload);
+            PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+            
+            delayPayload.encode(buf);
+            ServerPlayNetworking.send(handler.getPlayer(), VariantDelayPayload.ID, buf);
         });
     }
     
@@ -39,7 +41,7 @@ public class VariantSwapNetworking {
             return;
         }
     
-        Identifier targetId = Identifier.of(payload.targetId());
+        Identifier targetId = new Identifier(payload.targetId());
         ItemStack heldStack = player.getInventory().getStack(slot);
     
         if (player.isCreative()) {

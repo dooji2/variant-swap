@@ -7,9 +7,9 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 public class VariantSwapClientNetworking {
     public static void init() {
-        ClientPlayNetworking.registerGlobalReceiver(VariantDelayPayload.ID, (payload, context) -> {
-            int delay = payload.delay();
-            VariantSwapClient.swapCooldown = delay;
+        ClientPlayNetworking.registerGlobalReceiver(VariantDelayPayload.ID, (client, handler, buf, responseSender) -> {
+            VariantDelayPayload payload = VariantDelayPayload.decode(buf);
+            VariantSwapClient.swapCooldown = payload.delay();
         });
     }
 }

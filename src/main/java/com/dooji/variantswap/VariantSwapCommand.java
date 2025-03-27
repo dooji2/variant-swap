@@ -5,6 +5,8 @@ import com.dooji.variantswap.network.payloads.VariantDelayPayload;
 import com.mojang.brigadier.CommandDispatcher;
 import com.mojang.brigadier.arguments.IntegerArgumentType;
 
+import io.netty.buffer.Unpooled;
+import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
 import net.minecraft.text.Text;
@@ -63,9 +65,11 @@ public class VariantSwapCommand {
 
     private static void sendDelayPayloadToAll(MinecraftServer server) {
         VariantDelayPayload payload = new VariantDelayPayload(VariantSwapConfig.getDelay());
+        PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
+        payload.encode(buf);
 
         for (ServerPlayerEntity player : server.getPlayerManager().getPlayerList()) {
-            ServerPlayNetworking.send(player, payload);
+            ServerPlayNetworking.send(player, VariantDelayPayload.ID, buf);
         }
     }
 }

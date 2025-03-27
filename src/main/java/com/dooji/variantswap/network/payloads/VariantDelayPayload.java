@@ -3,26 +3,23 @@ package com.dooji.variantswap.network.payloads;
 import io.netty.buffer.Unpooled;
 
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.network.codec.PacketCodec;
-import net.minecraft.network.codec.PacketCodecs;
-import net.minecraft.network.packet.CustomPayload;
 import net.minecraft.util.Identifier;
 
-public record VariantDelayPayload(int delay) implements CustomPayload {
-    public static final CustomPayload.Id<VariantDelayPayload> ID = new CustomPayload.Id<>(Identifier.of("variant-swap", "delay"));
-    public static final PacketCodec<PacketByteBuf, VariantDelayPayload> CODEC = PacketCodec.tuple(
-            PacketCodecs.INTEGER, VariantDelayPayload::delay,
-            VariantDelayPayload::new
-    );
+public record VariantDelayPayload(int delay) {
+    public static final Identifier ID = new Identifier("variant-swap", "delay");
 
-    @Override
-    public CustomPayload.Id<? extends CustomPayload> getId() {
-        return ID;
+    public void encode(PacketByteBuf buf) {
+        buf.writeInt(delay);
     }
-    
+
+    public static VariantDelayPayload decode(PacketByteBuf buf) {
+        return new VariantDelayPayload(buf.readInt());
+    }
+
     public PacketByteBuf toPacketByteBuf() {
         PacketByteBuf buf = new PacketByteBuf(Unpooled.buffer());
-        buf.writeInt(delay);
+        encode(buf);
+        
         return buf;
     }
 }
