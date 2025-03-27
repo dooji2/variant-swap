@@ -180,7 +180,7 @@ public class VariantMapping {
                         reader.beginArray();
 
                         while (reader.hasNext()) {
-                            group.add(Identifier.of(reader.nextString()));
+                            group.add(new Identifier(reader.nextString()));
                         }
 
                         reader.endArray();

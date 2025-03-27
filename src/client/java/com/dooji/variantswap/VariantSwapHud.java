@@ -80,7 +80,7 @@ public class VariantSwapHud implements HudRenderCallback {
     }
 
     @Override
-    public void onHudRender(DrawContext context, RenderTickCounter tickDelta) {
+    public void onHudRender(DrawContext context, float tickDelta) {
         long currentTime = System.currentTimeMillis();
 
         if (currentGroup == null) return;
