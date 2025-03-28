@@ -1,10 +1,12 @@
 package com.dooji.variantswap;
 
+import net.minecraft.block.Block;
 import net.minecraft.item.BlockItem;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
-import net.minecraft.registry.tag.TagKey;
+import net.minecraft.tag.BlockTags;
+import net.minecraft.tag.ItemTags;
+import net.minecraft.tag.Tag;
 import net.minecraft.util.Identifier;
 
 import java.util.*;
@@ -15,6 +17,7 @@ import java.io.IOException;
 
 import com.google.gson.Gson;
 import com.google.gson.stream.JsonReader;
+import net.minecraft.util.registry.Registry;
 
 public class VariantMapping {
     private static final File configFile = new File("config/Variant Swap/mappings.json");
@@ -33,18 +36,19 @@ public class VariantMapping {
     }
 
     private Map<String, List<String>> generateMappings() {
-        Set<Identifier> allItems = Registries.ITEM.getIds();
+        Set<Identifier> allItems = Registry.ITEM.getIds();
         Map<String, List<String>> groups = new HashMap<>();
 
         for (Identifier id : allItems) {
             String candidate = null;
 
-            Item item = Registries.ITEM.get(id);
+            Item item = Registry.ITEM.get(id);
             ItemStack stack = new ItemStack(item);
 
-            for (TagKey<Item> tag : stack.streamTags().toList()) {
-                Identifier tagId = tag.id();
-                if ("variant_swap".equals(tagId.getNamespace())) {
+            Map<Identifier, Tag<Item>> allItemTags = ItemTags.getTagGroup().getTags();
+            for (Map.Entry<Identifier, Tag<Item>> entry : allItemTags.entrySet()) {
+                Identifier tagId = entry.getKey();
+                if ("variant_swap".equals(tagId.getNamespace()) && stack.isIn(entry.getValue())) {
                     candidate = tagId.getPath();
                     break;
                 }
@@ -97,21 +101,24 @@ public class VariantMapping {
 
     private String getCandidate(Identifier id) {
         String candidate = null;
-        Item item = Registries.ITEM.get(id);
+        Item item = Registry.ITEM.get(id);
         ItemStack stack = new ItemStack(item);
 
-        for (TagKey<Item> tag : stack.streamTags().toList()) {
-            Identifier tagId = tag.id();
-            if ("variant_swap".equals(tagId.getNamespace())) {
+        Map<Identifier, Tag<Item>> allItemTags = ItemTags.getTagGroup().getTags();
+        for (Map.Entry<Identifier, Tag<Item>> entry : allItemTags.entrySet()) {
+            Identifier tagId = entry.getKey();
+            if ("variant_swap".equals(tagId.getNamespace()) && stack.isIn(entry.getValue())) {
                 candidate = tagId.getPath();
                 break;
             }
         }
 
         if (candidate == null && item instanceof BlockItem blockItem) {
-            for (TagKey<?> tag : blockItem.getBlock().getDefaultState().streamTags().toList()) {
-                Identifier tagId = tag.id();
-                if ("variant_swap".equals(tagId.getNamespace())) {
+            Map<Identifier, Tag<Block>> allBlockTags = BlockTags.getTagGroup().getTags();
+            for (Map.Entry<Identifier, Tag<Block>> entry : allBlockTags.entrySet()) {
+                Identifier tagId = entry.getKey();
+                if ("variant_swap".equals(tagId.getNamespace()) &&
+                        blockItem.getBlock().getDefaultState().isIn(entry.getValue())) {
                     candidate = tagId.getPath();
                     break;
                 }

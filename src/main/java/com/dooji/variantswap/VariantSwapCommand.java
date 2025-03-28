@@ -9,23 +9,21 @@ import io.netty.buffer.Unpooled;
 import net.minecraft.network.PacketByteBuf;
 import net.minecraft.server.command.CommandManager;
 import net.minecraft.server.command.ServerCommandSource;
-import net.minecraft.text.Text;
 import net.minecraft.server.network.ServerPlayerEntity;
-import net.minecraft.command.CommandRegistryAccess;
 import net.minecraft.server.MinecraftServer;
-import net.minecraft.server.command.CommandManager.RegistrationEnvironment;
 
-import net.fabricmc.fabric.api.command.v2.CommandRegistrationCallback;
+import net.fabricmc.fabric.api.command.v1.CommandRegistrationCallback;
 import net.fabricmc.fabric.api.networking.v1.ServerPlayNetworking;
+import net.minecraft.text.TranslatableText;
 
 public class VariantSwapCommand {
     public static void register() {
-        CommandRegistrationCallback.EVENT.register((dispatcher, registryAccess, environment) -> {
-            registerCommands(dispatcher, registryAccess, environment);
+        CommandRegistrationCallback.EVENT.register((dispatcher, dedicated) -> {
+            registerCommands(dispatcher);
         });
     }
 
-    private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher, CommandRegistryAccess registryAccess, RegistrationEnvironment environment) {
+    private static void registerCommands(CommandDispatcher<ServerCommandSource> dispatcher) {
         dispatcher.register(CommandManager.literal("variant-swap")
             .then(CommandManager.literal("cooldown")
                 .then(CommandManager.literal("reset")
@@ -33,13 +31,13 @@ public class VariantSwapCommand {
                         ServerCommandSource source = context.getSource();
 
                         if (!source.hasPermissionLevel(VariantSwapConfig.getOpLevel())) {
-                            source.sendError(Text.translatable("variantswap.command.insufficient_permission"));
+                            source.sendError(new TranslatableText("variantswap.command.insufficient_permission"));
                             return 0;
                         }
 
                         VariantSwapConfig.setDelay(50);
                         sendDelayPayloadToAll(source.getServer());
-                        source.sendFeedback(() -> Text.translatable("variantswap.command.cooldown_reset", 50), false);
+                        source.sendFeedback(new TranslatableText("variantswap.command.cooldown_reset", 50), false);
                         return 1;
                     })
                 )
@@ -48,14 +46,14 @@ public class VariantSwapCommand {
                         ServerCommandSource source = context.getSource();
 
                         if (!source.hasPermissionLevel(VariantSwapConfig.getOpLevel())) {
-                            source.sendError(Text.translatable("variantswap.command.insufficient_permission"));
+                            source.sendError(new TranslatableText("variantswap.command.insufficient_permission"));
                             return 0;
                         }
 
                         int newDelay = IntegerArgumentType.getInteger(context, "newMilliseconds");
                         VariantSwapConfig.setDelay(newDelay);
                         sendDelayPayloadToAll(source.getServer());
-                        source.sendFeedback(() -> Text.translatable("variantswap.command.cooldown_set", newDelay), false);
+                        source.sendFeedback(new TranslatableText("variantswap.command.cooldown_set", newDelay), false);
                         return 1;
                     })
                 )

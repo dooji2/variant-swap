@@ -11,8 +11,8 @@ import net.fabricmc.fabric.api.client.networking.v1.ClientPlayNetworking;
 
 import net.minecraft.client.option.KeyBinding;
 import net.minecraft.client.util.InputUtil;
+import net.minecraft.util.registry.Registry;
 import net.minecraft.network.PacketByteBuf;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
 
 import org.lwjgl.glfw.GLFW;
@@ -71,7 +71,7 @@ public class VariantSwapClient implements ClientModInitializer {
                             return;
                         }
 
-                        Identifier currentId = Registries.ITEM.getId(client.player.getInventory().getStack(slot).getItem());
+                        Identifier currentId = Registry.ITEM.getId(client.player.getInventory().getStack(slot).getItem());
                         List<Identifier> group = variantMapping.getGroup(currentId);
 
                         if (group == null || group.size() < 2) {
@@ -97,7 +97,7 @@ public class VariantSwapClient implements ClientModInitializer {
                                     if (invSlot == slot) continue;
 
                                     if (!client.player.getInventory().getStack(invSlot).isEmpty()) {
-                                        Identifier stackId = Registries.ITEM.getId(client.player.getInventory().getStack(invSlot).getItem());
+                                        Identifier stackId = Registry.ITEM.getId(client.player.getInventory().getStack(invSlot).getItem());
 
                                         if (stackId.equals(candidateId)) {
                                             int count = client.player.getInventory().getStack(invSlot).getCount();

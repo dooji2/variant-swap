@@ -4,13 +4,14 @@ import com.mojang.blaze3d.systems.RenderSystem;
 
 import net.fabricmc.fabric.api.client.rendering.v1.HudRenderCallback;
 import net.fabricmc.loader.api.FabricLoader;
+
 import net.minecraft.client.MinecraftClient;
-import net.minecraft.client.gui.DrawContext;
-import net.minecraft.client.render.RenderTickCounter;
+import net.minecraft.client.gui.DrawableHelper;
+import net.minecraft.client.util.math.MatrixStack;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
-import net.minecraft.registry.Registries;
 import net.minecraft.util.Identifier;
+import net.minecraft.util.registry.Registry;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -38,7 +39,7 @@ public class VariantSwapHud implements HudRenderCallback {
         ItemStack heldStack = client.player.getInventory().getStack(slot);
         if (heldStack.isEmpty()) return;
 
-        Identifier currentId = Registries.ITEM.getId(heldStack.getItem());
+        Identifier currentId = Registry.ITEM.getId(heldStack.getItem());
         List<Identifier> group = VariantSwapClient.variantMapping.getGroup(currentId);
 
         if (group == null || group.size() < 2) return;
@@ -56,7 +57,7 @@ public class VariantSwapHud implements HudRenderCallback {
             List<Identifier> availableVariants = new ArrayList<>();
 
             for (Identifier variant : group) {
-                if (client.player.getInventory().count(Registries.ITEM.get(variant)) > 0) availableVariants.add(variant);
+                if (client.player.getInventory().count(Registry.ITEM.get(variant)) > 0) availableVariants.add(variant);
             }
 
             if (availableVariants.size() <= 1) return;
@@ -80,7 +81,7 @@ public class VariantSwapHud implements HudRenderCallback {
     }
 
     @Override
-    public void onHudRender(DrawContext context, float tickDelta) {
+    public void onHudRender(MatrixStack matrices, float tickDelta) {
         long currentTime = System.currentTimeMillis();
 
         if (currentGroup == null) return;
@@ -109,7 +110,7 @@ public class VariantSwapHud implements HudRenderCallback {
             List<Identifier> availableVariants = new ArrayList<>();
 
             for (Identifier variant : currentGroup) {
-                if (client.player.getInventory().count(Registries.ITEM.get(variant)) > 0) {
+                if (client.player.getInventory().count(Registry.ITEM.get(variant)) > 0) {
                     availableVariants.add(variant);
                 }
             }
@@ -138,32 +139,32 @@ public class VariantSwapHud implements HudRenderCallback {
                 int bgY = y - 2;
                 int bgSize = iconSize + 4;
 
-                context.fill(bgX, bgY, bgX + bgSize, bgY + bgSize, 0x88000000);
+                DrawableHelper.fill(matrices, bgX, bgY, bgX + bgSize, bgY + bgSize, 0x88000000);
 
                 int thickness = 2;
 
-                context.fill(bgX, bgY, bgX + bgSize, bgY + thickness, 0xFFFFFFFF);
-                context.fill(bgX, bgY, bgX + thickness, bgY + bgSize, 0xFFFFFFFF);
-                context.fill(bgX, bgY + bgSize - thickness, bgX + bgSize, bgY + bgSize, 0xFFFFFFFF);
-                context.fill(bgX + bgSize - thickness, bgY, bgX + bgSize, bgY + bgSize, 0xFFFFFFFF);
+                DrawableHelper.fill(matrices, bgX, bgY, bgX + bgSize, bgY + thickness, 0xFFFFFFFF);
+                DrawableHelper.fill(matrices, bgX, bgY, bgX + thickness, bgY + bgSize, 0xFFFFFFFF);
+                DrawableHelper.fill(matrices, bgX, bgY + bgSize - thickness, bgX + bgSize, bgY + bgSize, 0xFFFFFFFF);
+                DrawableHelper.fill(matrices, bgX + bgSize - thickness, bgY, bgX + bgSize, bgY + bgSize, 0xFFFFFFFF);
             }
 
             Identifier id = listToRender.get(variantIndex);
-            Item item = Registries.ITEM.get(id);
+            Item item = Registry.ITEM.get(id);
             ItemStack stack = new ItemStack(item);
 
             float scale = iconSize / 16.0f;
 
-            context.getMatrices().push();
-            context.getMatrices().translate(x, adjustedY, 0);
-            context.getMatrices().scale(scale, scale, scale);
+            matrices.push();
+            matrices.translate(x, adjustedY, 0);
+            matrices.scale(scale, scale, scale);
 
             RenderSystem.enableBlend();
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, itemAlpha);
-            context.drawItem(stack, 0, 0, 0);
+            client.getItemRenderer().renderInGui(stack, x, y);
             RenderSystem.setShaderColor(1.0f, 1.0f, 1.0f, 1.0f);
 
-            context.getMatrices().pop();
+            matrices.pop();
         }
 
         if (currentTime > displayEndTime && currentY <= -(SELECTED_ICON_SIZE + 4) + 1) {

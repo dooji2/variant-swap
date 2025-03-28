@@ -14,7 +14,7 @@ import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.network.packet.s2c.play.ScreenHandlerSlotUpdateS2CPacket;
 import net.minecraft.util.Identifier;
-import net.minecraft.registry.Registries;
+import net.minecraft.util.registry.Registry;
 
 public class VariantSwapNetworking {
     public static void init() {
@@ -45,7 +45,7 @@ public class VariantSwapNetworking {
         ItemStack heldStack = player.getInventory().getStack(slot);
     
         if (player.isCreative()) {
-            Item candidateItem = Registries.ITEM.get(targetId);
+            Item candidateItem = Registry.ITEM.get(targetId);
 
             if (candidateItem == null) return;
 
@@ -62,7 +62,7 @@ public class VariantSwapNetworking {
 
             ItemStack stack = player.getInventory().getStack(invSlot);
             if (!stack.isEmpty()) {
-                Identifier stackId = Registries.ITEM.getId(stack.getItem());
+                Identifier stackId = Registry.ITEM.getId(stack.getItem());
 
                 if (stackId.equals(targetId)) {
                     int count = stack.getCount();
