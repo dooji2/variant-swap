@@ -39,7 +39,7 @@ public class VariantSwapCommand {
 
                         VariantSwapConfig.setDelay(50);
                         sendDelayPayloadToAll(source.getServer());
-                        source.sendFeedback(() -> Text.translatable("variantswap.command.cooldown_reset", 50), false);
+                        source.sendFeedback(Text.translatable("variantswap.command.cooldown_reset", 50), false);
                         return 1;
                     })
                 )
@@ -55,7 +55,7 @@ public class VariantSwapCommand {
                         int newDelay = IntegerArgumentType.getInteger(context, "newMilliseconds");
                         VariantSwapConfig.setDelay(newDelay);
                         sendDelayPayloadToAll(source.getServer());
-                        source.sendFeedback(() -> Text.translatable("variantswap.command.cooldown_set", newDelay), false);
+                        source.sendFeedback(Text.translatable("variantswap.command.cooldown_set", newDelay), false);
                         return 1;
                     })
                 )
